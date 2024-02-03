@@ -27,45 +27,50 @@ public class EtlService {
 
     private final RestTemplate restTemplate;
 
-    @Transactional
     @Scheduled(cron = "* * * * * *")
+    @Transactional
     public void readFrom() throws InterruptedException {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", "*/*");
         headers.set("CJ-Access-Token", token);
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        List<String> items = Arrays.asList(CategoryList.category().split(","));
-        for (String item : items) {
+            String item = "4D7853CE-9E1C-4103-A06F-46401827A535";
             ProductLst productRes = restTemplate
                     .exchange("https://developers.cjdropshipping.com/api2.0/v1/product/list?categoryId=" +item, HttpMethod.GET, entity, ProductLst.class).getBody();
             Thread.sleep(2000);
             long total = productRes.getData().getTotal();
             int m = Math.round(total/200)+1;
             for (int j=1;j<=m;j++){
-                ProductLst productResf = restTemplate
-                        .exchange("https://developers.cjdropshipping.com/api2.0/v1/product/list?categoryId=" +item + "&pageSize=200&pageNum="+j, HttpMethod.GET, entity, ProductLst.class).getBody();
-            productResf.getData().getList().forEach(p->{
-                ProductCj productCj = new ProductCj();
-                productCj.setProductImage(p.getProductImage());
-                productCj.setProductName(p.getProductName());
-                productCj.setPid(Long.valueOf(p.getPid()));
-                productCj.setProductSku(p.getProductSku());
-                productCj.setProductType(p.getProductType());
-                productCj.setProductWeight(p.getProductWeight());
-                productCj.setRemark(p.getRemark());
-                productCj.setCategoryId(p.getCategoryId());
-                productCj.setCreateTime(p.getCreateTime());
-                productCj.setSellPrice(p.getSellPrice());
-                productCj.setCategoryName(item);
-                save(productCj);
-            });
+                try {
+                    ProductLst productResf = restTemplate
+                            .exchange("https://developers.cjdropshipping.com/api2.0/v1/product/list?categoryId=" + item + "&pageSize=200&pageNum=" + j, HttpMethod.GET, entity, ProductLst.class).getBody();
+                    Thread.sleep(2000);
+                    productResf.getData().getList().forEach(p -> {
+                        ProductCj productCj = new ProductCj();
+                        productCj.setProductImage(p.getProductImage());
+                        productCj.setProductName(p.getProductNameEn());
+                        productCj.setPid(p.getPid());
+                        productCj.setProductSku(p.getProductSku());
+                        productCj.setProductType(p.getProductType());
+                        productCj.setProductWeight(p.getProductWeight());
+                        productCj.setRemark(p.getRemark());
+                        productCj.setCategoryId(p.getCategoryId());
+                        productCj.setCreateTime(p.getCreateTime());
+                        productCj.setSellPrice(p.getSellPrice());
+                        productCj.setCategoryName(item);
+                        save(productCj);
+
+                    });
+                }catch (Exception eee){
+                    System.out.println("error");
+                }
             }
-        }
     }
     @Transactional
     public void save(ProductCj productCj){
         try {
             prodoctCjDao.save(productCj);
+            System.out.println("inserted");
         } catch (Exception e) {
             System.out.println("error inserting");
             throw new RuntimeException(e);

@@ -18,7 +18,7 @@ import java.util.Date;
 @Cacheable(value = false)
 @NoArgsConstructor
 public class ProductCj extends BaseEntity{
-    private Long pid;
+    private String pid;
     @Column(length = 1000 , name = "product_name")
     private String productName;
     @Column(length = 1000 , name = "product_Sku")
